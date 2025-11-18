@@ -1,6 +1,6 @@
 package com.company.university.student.domain;
 
-import com.company.university.address.Address;
+import com.company.university.common.vo.Address;
 import com.company.university.lecture.domain.Lecture;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
