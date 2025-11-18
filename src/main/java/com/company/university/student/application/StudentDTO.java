@@ -1,6 +1,6 @@
 package com.company.university.student.application;
 
-import com.company.university.address.AddressDTO;
+import com.company.university.common.vo.Address;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import lombok.Builder;
@@ -23,5 +23,5 @@ public class StudentDTO {
     @NotNull
     private String studentNumber;
     @NotNull
-    private AddressDTO address;
+    private Address address;
 }
