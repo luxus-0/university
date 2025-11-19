@@ -5,6 +5,7 @@ import com.company.university.student.domain.Student;
 import com.company.university.student.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +25,18 @@ public class StudentController {
     }
 
     @GetMapping
-    public ResponseEntity<Set<StudentDTO>> getAllStudents() {
-        return ResponseEntity.ok(studentService.getAllStudents());
+    public ResponseEntity<Set<StudentDTO>> getStudents() {
+        return ResponseEntity.ok(studentService.getStudents());
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<Page<StudentDTO>> getStudents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        return ResponseEntity.ok(studentService.getStudents(page, size, sortBy, direction));
     }
 
     @PostMapping

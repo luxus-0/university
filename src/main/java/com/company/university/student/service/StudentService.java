@@ -11,6 +11,10 @@ import com.company.university.student.domain.Student;
 import com.company.university.student.domain.StudentRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -42,11 +46,23 @@ public class StudentService {
         return studentMapper.toDto(student);
     }
 
-    public Set<StudentDTO> getAllStudents() {
+    public Set<StudentDTO> getStudents() {
         return studentRepository.findAll()
                 .stream()
                 .map(studentMapper::toDto)
                 .collect(Collectors.toSet());
+    }
+
+    public Page<StudentDTO> getStudents(int page, int size, String sortBy, String direction) {
+
+        Sort sort = direction.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() :
+                Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return studentRepository.findAll(pageable)
+                .map(studentMapper::toDto);
     }
 
     @Transactional
