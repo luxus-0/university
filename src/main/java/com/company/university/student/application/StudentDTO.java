@@ -12,6 +12,8 @@ import java.time.LocalDate;
 @Getter
 public class StudentDTO {
     @NotNull
+    private Long id;
+    @NotNull
     private String name;
     @NotNull
     private String surname;
