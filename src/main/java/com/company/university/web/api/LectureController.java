@@ -4,6 +4,10 @@ import com.company.university.lecture.application.LectureDTO;
 import com.company.university.lecture.domain.Lecture;
 import com.company.university.lecture.service.LectureService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,22 +23,49 @@ public class LectureController {
     private final LectureService lectureService;
 
     @GetMapping
-    public ResponseEntity<List<LectureDTO>> getAllLectures() {
+    public ResponseEntity<List<LectureDTO>> getLectures() {
         List<LectureDTO> lectures = lectureService.getLectures();
         return ResponseEntity.ok(lectures);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<LectureDTO> getLectureById(@PathVariable Long id) {
+    public ResponseEntity<LectureDTO> getLecture(@PathVariable Long id) {
         LectureDTO lecture = lectureService.getLecture(id);
         return ResponseEntity.ok(lecture);
     }
 
-    @GetMapping("/by-date")
-    public ResponseEntity<List<LectureDTO>> getLecturesByDate(@RequestParam("date") String dateString) {
+    @GetMapping("/date")
+    public ResponseEntity<List<LectureDTO>> getLectures(@RequestParam("date") String dateString) {
         LocalDate date = LocalDate.parse(dateString);
-        List<LectureDTO> lectures = lectureService.getLecturesByDate(date);
+        List<LectureDTO> lectures = lectureService.getLectures(date);
         return ResponseEntity.ok(lectures);
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<Page<LectureDTO>> getLecturesPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "startTime") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        return ResponseEntity.ok(
+                lectureService.getLectures(page, size, sortBy, direction)
+        );
+    }
+
+    @GetMapping
+    public Page<LectureDTO> getLectures(
+            @PageableDefault(size = 10, sort = "startDate") Pageable pageable,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate startDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate endDate
+    ) {
+        return lectureService.getLectures(pageable, startDate, endDate);
     }
 
     @PostMapping

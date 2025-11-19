@@ -9,6 +9,10 @@ import com.company.university.lecturer.domain.Lecturer;
 import com.company.university.lecturer.domain.LecturerRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -38,14 +42,45 @@ public class LectureService {
         return lectureMapper.toDto(lecture);
     }
 
-    public List<LectureDTO> getLecturesByDate(LocalDate date) {
+    public List<LectureDTO> getLectures(LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        return lectureRepository.findByStartTimeBetween(startOfDay, endOfDay)
+        return lectureRepository.findByStartDateTimeBetween(startOfDay, endOfDay)
                 .stream()
                 .map(lectureMapper::toDto)
                 .toList();
+    }
+
+    public Page<LectureDTO> getLectures(int page, int size, String sortBy, String direction) {
+
+        Sort sort = direction.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() :
+                Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return lectureRepository.findAll(pageable)
+                .map(lectureMapper::toDto);
+    }
+
+    public Page<LectureDTO> getLectures(Pageable pageable, LocalDate startDate, LocalDate endDate) {
+
+        if (startDate == null && endDate == null) {
+            return lectureRepository.findAll(pageable)
+                    .map(lectureMapper::toDto);
+        }
+
+        LocalDateTime start = (startDate != null)
+                ? startDate.atStartOfDay()
+                : LocalDate.MIN.atStartOfDay();
+
+        LocalDateTime end = (endDate != null)
+                ? endDate.atTime(LocalTime.MAX)
+                : LocalDate.MAX.atTime(LocalTime.MAX);
+
+        return lectureRepository.findByStartDateTimeBetween(start, end, pageable)
+                .map(lectureMapper::toDto);
     }
 
     public LectureDTO createLecture(Lecture lecture) {
