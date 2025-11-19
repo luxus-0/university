@@ -25,8 +25,8 @@ public class Lecture {
     private String title;
     private String description;
     private String roomNumber;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private LocalDateTime startDateTime;
+    private LocalDateTime endDateTime;
 
     @ManyToMany(mappedBy = "lectures")
     private Set<Student> students = new HashSet<>();
