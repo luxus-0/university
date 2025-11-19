@@ -16,12 +16,10 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Table(name = "lectures")
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Lecture {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     private String title;
