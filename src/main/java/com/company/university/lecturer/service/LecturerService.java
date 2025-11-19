@@ -6,6 +6,10 @@ import com.company.university.lecturer.application.LecturerMapper;
 import com.company.university.lecturer.domain.Lecturer;
 import com.company.university.lecturer.domain.LecturerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -32,11 +36,23 @@ public class LecturerService {
         return lecturerMapper.toDto(lecturer);
     }
 
-    public Set<LecturerDTO> getAllLecturers() {
+    public Set<LecturerDTO> getLecturers() {
         return lecturerRepository.findAll()
                 .stream()
                 .map(lecturerMapper::toDto)
                 .collect(Collectors.toSet());
+    }
+
+    public Page<LecturerDTO> getLecturers(int page, int size, String sortBy, String direction) {
+
+        Sort sort = direction.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() :
+                Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return lecturerRepository.findAll(pageable)
+                .map(lecturerMapper::toDto);
     }
 
     public LecturerDTO updateLecturer(Long id, Lecturer updatedLecturer) {
