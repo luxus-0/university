@@ -1,7 +1,6 @@
 package com.company.university.web.api;
 
-import com.company.university.lecture.application.LectureDTO;
-import com.company.university.lecture.domain.Lecture;
+import com.company.university.lecture.dto.*;
 import com.company.university.lecture.service.LectureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,26 +22,26 @@ public class LectureController {
     private final LectureService lectureService;
 
     @GetMapping
-    public ResponseEntity<List<LectureDTO>> getLectures() {
-        List<LectureDTO> lectures = lectureService.getLectures();
+    public ResponseEntity<List<FindLectureResponse>> getLectures() {
+        List<FindLectureResponse> lectures = lectureService.getLectures();
         return ResponseEntity.ok(lectures);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<LectureDTO> getLecture(@PathVariable Long id) {
-        LectureDTO lecture = lectureService.getLecture(id);
+    public ResponseEntity<FindLectureResponse> getLecture(@PathVariable Long id) {
+        FindLectureResponse lecture = lectureService.getLecture(id);
         return ResponseEntity.ok(lecture);
     }
 
     @GetMapping("/date")
-    public ResponseEntity<List<LectureDTO>> getLectures(@RequestParam("date") String dateString) {
+    public ResponseEntity<List<FindLectureResponse>> getLectures(@RequestParam("date") String dateString) {
         LocalDate date = LocalDate.parse(dateString);
-        List<LectureDTO> lectures = lectureService.getLectures(date);
+        List<FindLectureResponse> lectures = lectureService.getLectures(date);
         return ResponseEntity.ok(lectures);
     }
 
     @GetMapping("/page")
-    public ResponseEntity<Page<LectureDTO>> getLecturesPage(
+    public ResponseEntity<Page<FindLectureResponse>> getLecturesPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "startTime") String sortBy,
@@ -54,8 +53,8 @@ public class LectureController {
     }
 
     @GetMapping
-    public Page<LectureDTO> getLectures(
-            @PageableDefault(size = 10, sort = "startDate") Pageable pageable,
+    public Page<FindLectureResponse> getLectures(
+            @PageableDefault(sort = "startDate") Pageable pageable,
 
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -69,15 +68,15 @@ public class LectureController {
     }
 
     @PostMapping
-    public ResponseEntity<LectureDTO> createLecture(@RequestBody Lecture lecture) {
-        LectureDTO created = lectureService.createLecture(lecture);
+    public ResponseEntity<CreateLectureResponse> createLecture(@RequestBody CreateLectureRequest request) {
+        CreateLectureResponse created = lectureService.createLecture(request);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<LectureDTO> updateLecture(@PathVariable Long id,
-                                                    @RequestBody Lecture updatedLecture) {
-        LectureDTO lectureDTO = lectureService.updateLecture(id, updatedLecture);
+    public ResponseEntity<UpdateLectureResponse> updateLecture(@PathVariable Long id,
+                                                               @RequestBody UpdateLectureRequest updatedLecture) {
+        UpdateLectureResponse lectureDTO = lectureService.updateLecture(id, updatedLecture);
         return ResponseEntity.ok(lectureDTO);
     }
 

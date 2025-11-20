@@ -15,7 +15,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "lectures")
+@Table(name = "lecture")
 public class Lecture {
 
     @Id
@@ -28,7 +28,7 @@ public class Lecture {
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
 
-    @ManyToMany(mappedBy = "lectures")
+    @ManyToMany(mappedBy = "lecture")
     private Set<Student> students = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

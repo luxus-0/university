@@ -1,12 +1,10 @@
 package com.company.university.lecture.service;
 
-import com.company.university.lecture.application.LectureDTO;
 import com.company.university.lecture.application.LectureMapper;
-import com.company.university.lecture.application.LectureValidator;
+import com.company.university.lecture.application.LectureNotFoundException;
 import com.company.university.lecture.domain.Lecture;
 import com.company.university.lecture.domain.LectureRepository;
-import com.company.university.lecturer.domain.Lecturer;
-import com.company.university.lecturer.domain.LecturerRepository;
+import com.company.university.lecture.dto.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,6 +17,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
+
+import static com.company.university.lecture.application.LectureMapper.toLecture;
 
 @Service
 @RequiredArgsConstructor
@@ -26,33 +27,31 @@ import java.util.List;
 public class LectureService {
 
     private final LectureRepository lectureRepository;
-    private final LecturerRepository lecturerRepository;
-    private final LectureMapper lectureMapper;
-    private final LectureValidator lectureValidator;
 
-    public List<LectureDTO> getLectures() {
+    public List<FindLectureResponse> getLectures() {
         return lectureRepository.findAll()
                 .stream()
-                .map(lectureMapper::toDto)
+                .map(LectureMapper::findLectureResponse)
                 .toList();
     }
 
-    public LectureDTO getLecture(Long id) {
-        Lecture lecture = findLectureById(id);
-        return lectureMapper.toDto(lecture);
+    public FindLectureResponse getLecture(Long id) {
+        Lecture lecture = lectureRepository.findById(id)
+                .orElseThrow(() -> new LectureNotFoundException("Lecture not found with id: " + id));
+        return LectureMapper.findLectureResponse(lecture);
     }
 
-    public List<LectureDTO> getLectures(LocalDate date) {
+    public List<FindLectureResponse> getLectures(LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
         return lectureRepository.findByStartDateTimeBetween(startOfDay, endOfDay)
                 .stream()
-                .map(lectureMapper::toDto)
+                .map(LectureMapper::findLectureResponse)
                 .toList();
     }
 
-    public Page<LectureDTO> getLectures(int page, int size, String sortBy, String direction) {
+    public Page<FindLectureResponse> getLectures(int page, int size, String sortBy, String direction) {
 
         Sort sort = direction.equalsIgnoreCase("desc") ?
                 Sort.by(sortBy).descending() :
@@ -61,14 +60,14 @@ public class LectureService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return lectureRepository.findAll(pageable)
-                .map(lectureMapper::toDto);
+                .map(LectureMapper::findLectureResponse);
     }
 
-    public Page<LectureDTO> getLectures(Pageable pageable, LocalDate startDate, LocalDate endDate) {
+    public Page<FindLectureResponse> getLectures(Pageable pageable, LocalDate startDate, LocalDate endDate) {
 
         if (startDate == null && endDate == null) {
             return lectureRepository.findAll(pageable)
-                    .map(lectureMapper::toDto);
+                    .map(LectureMapper::findLectureResponse);
         }
 
         LocalDateTime start = (startDate != null)
@@ -80,53 +79,32 @@ public class LectureService {
                 : LocalDate.MAX.atTime(LocalTime.MAX);
 
         return lectureRepository.findByStartDateTimeBetween(start, end, pageable)
-                .map(lectureMapper::toDto);
+                .map(LectureMapper::findLectureResponse);
     }
 
-    public LectureDTO createLecture(Lecture lecture) {
-        Lecturer lecturer = findLecturerById(lecture.getLecturer().getId());
+    public CreateLectureResponse createLecture(CreateLectureRequest request) {
+        Lecture lecture = toLecture(request);
 
-        lectureValidator.validateOnCreate(lecture);
-
-        lecturer.addLecture(lecture);
-
-        return lectureMapper.toDto(lectureRepository.save(lecture));
+        Lecture savedLecture = lectureRepository.save(lecture);
+        return LectureMapper.createLectureResponse(savedLecture);
     }
 
-    public LectureDTO updateLecture(Long lectureId, Lecture updatedLecture) {
-        Lecture lecture = findLectureById(lectureId);
-        Lecturer newLecturer = findLecturerById(updatedLecture.getLecturer().getId());
+    public UpdateLectureResponse updateLecture(Long lectureId, UpdateLectureRequest request) {
+        Lecture lecture = lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new LectureNotFoundException("Lecture not found with id: " + lectureId));
 
-        lectureValidator.validateOnUpdate(lectureId, updatedLecture);
+        Optional.ofNullable(request.getTitle()).ifPresent(lecture::setTitle);
+        Optional.ofNullable(request.getRoomNumber()).ifPresent(lecture::setRoomNumber);
+        Optional.ofNullable(request.getStartDateTime()).ifPresent(lecture::setStartDateTime);
+        Optional.ofNullable(request.getEndDateTime()).ifPresent(lecture::setEndDateTime);
 
-        updateLecturerIfChanged(lecture, newLecturer);
+        Lecture updatedLecture = lectureRepository.save(lecture);
 
-        lectureMapper.updateLecture(lecture, updatedLecture);
-
-        return lectureMapper.toDto(lectureRepository.save(lecture));
+        return LectureMapper.updateLectureResponse(updatedLecture);
     }
 
     public void deleteLecture(Long id) {
         lectureRepository.deleteById(id);
     }
 
-    private Lecture findLectureById(Long id) {
-        return lectureRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Lecture not found with id: " + id));
-    }
-
-    private Lecturer findLecturerById(Long id) {
-        return lecturerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Lecturer not found with id: " + id));
-    }
-
-    private void updateLecturerIfChanged(Lecture lecture, Lecturer newLecturer) {
-        Lecturer oldLecturer = lecture.getLecturer();
-        if (oldLecturer != null && !oldLecturer.getId().equals(newLecturer.getId())) {
-            oldLecturer.removeLecture(lecture);
-            newLecturer.addLecture(lecture);
-        } else if (oldLecturer == null) {
-            newLecturer.addLecture(lecture);
-        }
-    }
 }
