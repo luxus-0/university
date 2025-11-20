@@ -1,7 +1,7 @@
 package com.company.university.web;
 
-import com.company.university.lecture.application.LectureException;
-import com.company.university.student.application.StudentException;
+import com.company.university.lecture.application.LectureNotFoundException;
+import com.company.university.student.application.StudentNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), null);
     }
 
-    @ExceptionHandler({StudentException.class, LectureException.class})
+    @ExceptionHandler({StudentNotFoundException.class, LectureNotFoundException.class})
     public ResponseEntity<ApiError> handleNotFound(RuntimeException ex, HttpServletRequest request) {
         log.info("Resource not found at path {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI(), null);
