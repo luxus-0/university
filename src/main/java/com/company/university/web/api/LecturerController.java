@@ -1,8 +1,8 @@
 package com.company.university.web.api;
 
 import com.company.university.lecture.domain.Lecture;
-import com.company.university.lecturer.application.LecturerDTO;
 import com.company.university.lecturer.domain.Lecturer;
+import com.company.university.lecturer.dto.*;
 import com.company.university.lecturer.service.LecturerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,13 +20,13 @@ public class LecturerController {
     private final LecturerService lecturerService;
 
     @GetMapping
-    public ResponseEntity<Set<LecturerDTO>> getLecturers() {
-        Set<LecturerDTO> lecturers = lecturerService.getLecturers();
+    public ResponseEntity<Set<FindLecturerResponse>> getLecturers() {
+        Set<FindLecturerResponse> lecturers = lecturerService.getLecturers();
         return ResponseEntity.ok(lecturers);
     }
 
     @GetMapping("/page")
-    public ResponseEntity<Page<LecturerDTO>> getLecturersPage(
+    public ResponseEntity<Page<FindLecturerResponse>> getLecturersPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -38,14 +38,14 @@ public class LecturerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<LecturerDTO> getLecturer(@PathVariable Long id) {
-        LecturerDTO lecturer = lecturerService.getLecturer(id);
+    public ResponseEntity<FindLecturerResponse> getLecturer(@PathVariable Long id) {
+        FindLecturerResponse lecturer = lecturerService.getLecturer(id);
         return ResponseEntity.ok(lecturer);
     }
 
     @PostMapping
-    public ResponseEntity<LecturerDTO> createLecturer(@RequestBody Lecturer lecturer) {
-        LecturerDTO created = lecturerService.createLecturer(lecturer);
+    public ResponseEntity<CreateLecturerResponse> createLecturer(@RequestBody CreateLecturerRequest lecturer) {
+        CreateLecturerResponse created = lecturerService.createLecturer(lecturer);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
@@ -56,10 +56,10 @@ public class LecturerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<LecturerDTO> updateLecturer(@PathVariable Long id,
-                                                      @RequestBody Lecturer updatedLecturer) {
-        LecturerDTO lecturerDTO = lecturerService.updateLecturer(id, updatedLecturer);
-        return ResponseEntity.ok(lecturerDTO);
+    public ResponseEntity<UpdateLecturerResponse> updateLecturer(@PathVariable Long id,
+                                                                 @RequestBody UpdateLecturerRequest updatedLecturer) {
+        UpdateLecturerResponse lecturer = lecturerService.updateLecturer(id, updatedLecturer);
+        return ResponseEntity.ok(lecturer);
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,5 @@
 package com.company.university.lecturer.domain;
 
-import com.company.university.common.vo.Address;
 import com.company.university.lecture.domain.Lecture;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -17,7 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "lecturers")
+@Table(name = "lecturer")
 public class Lecturer {
 
     @Id
@@ -29,9 +28,6 @@ public class Lecturer {
 
     @Email
     private String email;
-
-    @Embedded
-    private Address address;
 
     @Past
     private LocalDate dateOfBirth;
