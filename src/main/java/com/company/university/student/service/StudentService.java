@@ -1,12 +1,8 @@
 package com.company.university.student.service;
 
-import com.company.university.lecture.application.LectureException;
-import com.company.university.lecture.domain.Lecture;
-import com.company.university.lecture.domain.LectureRepository;
-import com.company.university.student.application.StudentDTO;
-import com.company.university.student.application.StudentException;
+import com.company.university.student.domain.StudentStatus;
+import com.company.university.student.dto.*;
 import com.company.university.student.application.StudentMapper;
-import com.company.university.student.application.StudentValidator;
 import com.company.university.student.domain.Student;
 import com.company.university.student.domain.StudentRepository;
 import jakarta.transaction.Transactional;
@@ -17,9 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.company.university.student.application.StudentMapper.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,101 +24,52 @@ import java.util.stream.Collectors;
 public class StudentService {
 
     private final StudentRepository studentRepository;
-    private final LectureRepository lectureRepository;
-    private final StudentMapper studentMapper;
-    private final StudentValidator studentValidator;
 
-    public StudentDTO createStudent(Student student) {
-        if (student.getId() != null) {
-            throw new StudentException("New student cannot have an ID");
-        }
-
-        student.setCreatedAt(LocalDateTime.now());
-        Student saved = studentRepository.save(student);
-        return studentMapper.toDto(saved);
+    public CreateStudentResponse createStudent(CreateStudentRequest request) {
+        Student student = createStudentWithStatusActive(request);
+        Student studentSaved = studentRepository.save(student);
+        return createStudentResponse(studentSaved);
     }
 
-    public StudentDTO getStudent(Long id) {
-        Student student = findStudentById(id);
-        return studentMapper.toDto(student);
-    }
-
-    public Set<StudentDTO> getStudents() {
+    public Set<FindStudentResponse> getStudents() {
         return studentRepository.findAll()
                 .stream()
-                .map(studentMapper::toDto)
+                .map(StudentMapper::findStudentResponse)
                 .collect(Collectors.toSet());
     }
 
-    public Page<StudentDTO> getStudents(int page, int size, String sortBy, String direction) {
+    public FindStudentResponse getStudent(Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + id));
 
-        Sort sort = direction.equalsIgnoreCase("desc") ?
-                Sort.by(sortBy).descending() :
-                Sort.by(sortBy).ascending();
+        return StudentMapper.findStudentResponse(student);
+    }
+
+    public Page<FindStudentResponse> getStudents(int page, int size, String sortBy, String direction) {
+
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return studentRepository.findAll(pageable)
-                .map(studentMapper::toDto);
+                .map(StudentMapper::findStudentResponse);
     }
 
     @Transactional
-    public StudentDTO updateStudent(Long id, Student updatedStudent) {
-        Student existing = findStudentById(id);
+    public UpdateStudentResponse updateStudent(Long id, UpdateStudentRequest request) {
 
-        studentMapper.updateStudent(existing, updatedStudent);
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + id));
 
-        Student saved = studentRepository.save(existing);
-        return studentMapper.toDto(saved);
+        Student saved = studentRepository.save(student);
+
+        return updateStudentResponse(saved, student);
     }
 
     @Transactional
     public void deleteStudent(Long id) {
-        Student student = findStudentById(id);
-        studentRepository.delete(student);
-    }
-
-    @Transactional
-    public void addLectureToStudent(Long studentId, Long lectureId) {
-        Student student = findStudentById(studentId);
-        Lecture lecture = findLectureById(lectureId);
-
-        student.addLecture(lecture);
-        studentRepository.save(student);
-    }
-
-    private Student findStudentById(Long id) {
-        return studentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + id));
-    }
-
-    private Lecture findLectureById(Long id) {
-        return lectureRepository.findById(id)
-                .orElseThrow(() -> new LectureException("Lecture not found with id: " + id));
-    }
-
-    @Transactional
-    public void removeLectureFromStudent(Long studentId, Long lectureId) {
-        Student student = findStudentById(studentId);
-        Lecture lecture = lectureRepository.findById(lectureId)
-                .orElseThrow(() -> new LectureException("Lecture not found with id: " + lectureId));
-        student.removeLecture(lecture);
-        studentRepository.save(student);
-    }
-
-    @Transactional
-    public void enrollToLecture(Long studentId, Long lectureId) {
-
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-
-        Lecture lecture = lectureRepository.findById(lectureId)
-                .orElseThrow(() -> new IllegalArgumentException("Lecture not found"));
-
-        studentValidator.validateStudentAvailability(student, lecture);
-
-        student.addLecture(lecture);
-
-        studentRepository.save(student);
+        studentRepository.deleteById(id);
     }
 }

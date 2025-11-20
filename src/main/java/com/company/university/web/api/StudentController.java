@@ -1,16 +1,13 @@
 package com.company.university.web.api;
 
-import com.company.university.student.application.StudentDTO;
-import com.company.university.student.domain.Student;
+import com.company.university.student.dto.*;
 import com.company.university.student.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/students")
@@ -19,72 +16,47 @@ public class StudentController {
 
     private final StudentService studentService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<StudentDTO> getStudent(@PathVariable Long id) {
-        return ResponseEntity.ok(studentService.getStudent(id));
+    @PostMapping
+    public ResponseEntity<CreateStudentResponse> createStudent(
+            @Valid @RequestBody CreateStudentRequest request) {
+
+        CreateStudentResponse response = studentService.createStudent(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping
-    public ResponseEntity<Set<StudentDTO>> getStudents() {
+    @GetMapping("/all")
+    public ResponseEntity<?> getStudents() {
         return ResponseEntity.ok(studentService.getStudents());
     }
 
-    @GetMapping("/page")
-    public ResponseEntity<Page<StudentDTO>> getStudents(
+    @GetMapping
+    public ResponseEntity<Page<FindStudentResponse>> getStudentsPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction
-    ) {
-        return ResponseEntity.ok(studentService.getStudents(page, size, sortBy, direction));
+            @RequestParam(defaultValue = "asc") String direction) {
+
+        Page<FindStudentResponse> result = studentService.getStudents(page, size, sortBy, direction);
+        return ResponseEntity.ok(result);
     }
 
-    @PostMapping
-    public ResponseEntity<StudentDTO> createStudent(@Valid @RequestBody Student student) {
-        StudentDTO created = studentService.createStudent(student);
-        return ResponseEntity
-                .created(URI.create("/api/v1/students/" + created.getId()))
-                .body(created);
-    }
-
-    @PostMapping("/{studentId}/lectures/{lectureId}")
-    public ResponseEntity<Void> addLecture(
-            @PathVariable Long studentId,
-            @PathVariable Long lectureId
-    ) {
-        studentService.addLectureToStudent(studentId, lectureId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/{studentId}/lectures/{lectureId}/enroll")
-    public ResponseEntity<Void> enrollToLecture(
-            @PathVariable Long studentId,
-            @PathVariable Long lectureId
-    ) {
-        studentService.enrollToLecture(studentId, lectureId);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/{id}")
+    public ResponseEntity<FindStudentResponse> getStudent(@PathVariable Long id) {
+        return ResponseEntity.ok(studentService.getStudent(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StudentDTO> updateStudent(
+    public ResponseEntity<UpdateStudentResponse> updateStudent(
             @PathVariable Long id,
-            @Valid @RequestBody Student updatedStudent
-    ) {
-        return ResponseEntity.ok(studentService.updateStudent(id, updatedStudent));
+            @Valid @RequestBody UpdateStudentRequest request) {
+
+        UpdateStudentResponse response = studentService.updateStudent(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{studentId}/lectures/{lectureId}")
-    public ResponseEntity<Void> removeLecture(
-            @PathVariable Long studentId,
-            @PathVariable Long lectureId
-    ) {
-        studentService.removeLectureFromStudent(studentId, lectureId);
         return ResponseEntity.noContent().build();
     }
 }

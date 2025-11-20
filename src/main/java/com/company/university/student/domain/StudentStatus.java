@@ -1,6 +1,6 @@
 package com.company.university.student.domain;
 
-enum StudentStatus {
+public enum StudentStatus {
     ACTIVE,
     INACTIVE,
     GRADUATED,

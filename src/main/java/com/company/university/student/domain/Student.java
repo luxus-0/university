@@ -1,12 +1,11 @@
 package com.company.university.student.domain;
 
-import com.company.university.common.vo.Address;
 import com.company.university.lecture.domain.Lecture;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Past;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,7 +18,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "students")
+@Table(name = "student")
 public class Student {
 
     @Id
@@ -40,10 +39,7 @@ public class Student {
     @Enumerated(EnumType.STRING)
     private StudentStatus status;
 
-    @Embedded
-    private Address address;
-
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @CreatedDate
     private LocalDateTime createdAt;
 
     @ManyToMany
