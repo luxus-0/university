@@ -1,20 +1,32 @@
 package com.company.university.lecture.application;
 
 import com.company.university.lecture.domain.Lecture;
-import com.company.university.lecture.dto.CreateLectureRequest;
-import com.company.university.lecture.dto.CreateLectureResponse;
-import com.company.university.lecture.dto.FindLectureResponse;
-import com.company.university.lecture.dto.UpdateLectureResponse;
+import com.company.university.lecture.dto.*;
+import com.company.university.lecturer.domain.Lecturer;
 
 public class LectureMapper {
 
-    public static Lecture toLecture(CreateLectureRequest request) {
+    public static Lecture toLecture(CreateLectureRequest request, Lecturer lecturer) {
         return Lecture.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .startDateTime(request.getStartDateTime())
                 .endDateTime(request.getEndDateTime())
+                .roomNumber(request.getRoomNumber())
+                .lecturer(lecturer)
                 .build();
+    }
+
+    public static void updateLecture(Lecture lecture,
+                                     UpdateLectureRequest request,
+                                     Lecturer lecturer) {
+
+        lecture.setTitle(request.getTitle());
+        lecture.setDescription(request.getDescription());
+        lecture.setStartDateTime(request.getStartDateTime());
+        lecture.setEndDateTime(request.getEndDateTime());
+        lecture.setRoomNumber(request.getRoomNumber());
+        lecture.setLecturer(lecturer);
     }
 
     public static FindLectureResponse findLectureResponse(Lecture lecture) {
@@ -24,6 +36,8 @@ public class LectureMapper {
                 .description(lecture.getDescription())
                 .startDateTime(lecture.getStartDateTime())
                 .endDateTime(lecture.getEndDateTime())
+                .roomNumber(lecture.getRoomNumber())
+                .lecturerId(lecture.getLecturer().getId())
                 .build();
     }
 
@@ -34,6 +48,8 @@ public class LectureMapper {
                 .description(lecture.getDescription())
                 .startDateTime(lecture.getStartDateTime())
                 .endDateTime(lecture.getEndDateTime())
+                .roomNumber(lecture.getRoomNumber())
+                .lecturerId(lecture.getLecturer().getId())
                 .build();
     }
 
@@ -44,6 +60,7 @@ public class LectureMapper {
                 .roomNumber(lecture.getRoomNumber())
                 .startDateTime(lecture.getStartDateTime())
                 .endDateTime(lecture.getEndDateTime())
+                .lecturerId(lecture.getLecturer().getId())
                 .build();
     }
 }

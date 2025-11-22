@@ -12,9 +12,10 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@EqualsAndHashCode(exclude = {"lecturer", "students"})
 @Table(name = "lecture")
 public class Lecture {
 
@@ -22,26 +23,27 @@ public class Lecture {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
+
     private String description;
+
+    @Column(nullable = false)
     private String roomNumber;
+
+    @Column(nullable = false)
     private LocalDateTime startDateTime;
+
+    @Column(nullable = false)
     private LocalDateTime endDateTime;
 
-    @ManyToMany(mappedBy = "lecture")
+    @Builder.Default
+    @ToString.Exclude
+    @ManyToMany(mappedBy = "lectures")
     private Set<Student> students = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lecturer_id")
+    @JoinColumn(name = "lecturer_id", nullable = false)
+    @ToString.Exclude
     private Lecturer lecturer;
-
-    public void addStudent(Student student) {
-        students.add(student);
-        student.getLectures().add(this);
-    }
-
-    public void removeStudent(Student student) {
-        students.remove(student);
-        student.getLectures().remove(this);
-    }
 }

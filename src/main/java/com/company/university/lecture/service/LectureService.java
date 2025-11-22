@@ -2,9 +2,13 @@ package com.company.university.lecture.service;
 
 import com.company.university.lecture.application.LectureMapper;
 import com.company.university.lecture.application.LectureNotFoundException;
+import com.company.university.lecture.application.LectureValidator;
 import com.company.university.lecture.domain.Lecture;
 import com.company.university.lecture.domain.LectureRepository;
 import com.company.university.lecture.dto.*;
+import com.company.university.lecturer.application.LecturerNotFoundException;
+import com.company.university.lecturer.domain.Lecturer;
+import com.company.university.lecturer.domain.LecturerRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,9 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
-
-import static com.company.university.lecture.application.LectureMapper.toLecture;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,8 @@ import static com.company.university.lecture.application.LectureMapper.toLecture
 public class LectureService {
 
     private final LectureRepository lectureRepository;
+    private final LectureValidator lectureValidator;
+    private final LecturerRepository lecturerRepository;
 
     public List<FindLectureResponse> getLectures() {
         return lectureRepository.findAll()
@@ -36,8 +39,7 @@ public class LectureService {
     }
 
     public FindLectureResponse getLecture(Long id) {
-        Lecture lecture = lectureRepository.findById(id)
-                .orElseThrow(() -> new LectureNotFoundException("Lecture not found with id: " + id));
+        Lecture lecture = findLectureById(id);
         return LectureMapper.findLectureResponse(lecture);
     }
 
@@ -52,59 +54,63 @@ public class LectureService {
     }
 
     public Page<FindLectureResponse> getLectures(int page, int size, String sortBy, String direction) {
-
-        Sort sort = direction.equalsIgnoreCase("desc") ?
-                Sort.by(sortBy).descending() :
-                Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+        Pageable pageable = createPageable(page, size, sortBy, direction);
         return lectureRepository.findAll(pageable)
                 .map(LectureMapper::findLectureResponse);
     }
 
     public Page<FindLectureResponse> getLectures(Pageable pageable, LocalDate startDate, LocalDate endDate) {
-
         if (startDate == null && endDate == null) {
             return lectureRepository.findAll(pageable)
                     .map(LectureMapper::findLectureResponse);
         }
 
-        LocalDateTime start = (startDate != null)
-                ? startDate.atStartOfDay()
-                : LocalDate.MIN.atStartOfDay();
-
-        LocalDateTime end = (endDate != null)
-                ? endDate.atTime(LocalTime.MAX)
-                : LocalDate.MAX.atTime(LocalTime.MAX);
+        LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDate.MIN.atStartOfDay();
+        LocalDateTime end = endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDate.MAX.atTime(LocalTime.MAX);
 
         return lectureRepository.findByStartDateTimeBetween(start, end, pageable)
                 .map(LectureMapper::findLectureResponse);
     }
 
     public CreateLectureResponse createLecture(CreateLectureRequest request) {
-        Lecture lecture = toLecture(request);
+        Lecturer lecturer = findLecturerById(request.getLecturerId());
 
-        Lecture savedLecture = lectureRepository.save(lecture);
-        return LectureMapper.createLectureResponse(savedLecture);
+        lectureValidator.validateCreate(request);
+
+        Lecture lecture = LectureMapper.toLecture(request, lecturer);
+        Lecture saved = lectureRepository.save(lecture);
+
+        return LectureMapper.createLectureResponse(saved);
     }
 
-    public UpdateLectureResponse updateLecture(Long lectureId, UpdateLectureRequest request) {
-        Lecture lecture = lectureRepository.findById(lectureId)
-                .orElseThrow(() -> new LectureNotFoundException("Lecture not found with id: " + lectureId));
+    public UpdateLectureResponse updateLecture(Long id, UpdateLectureRequest request) {
+        Lecturer lecturer = findLecturerById(request.getLecturerId());
+        Lecture lecture = findLectureById(id);
 
-        Optional.ofNullable(request.getTitle()).ifPresent(lecture::setTitle);
-        Optional.ofNullable(request.getRoomNumber()).ifPresent(lecture::setRoomNumber);
-        Optional.ofNullable(request.getStartDateTime()).ifPresent(lecture::setStartDateTime);
-        Optional.ofNullable(request.getEndDateTime()).ifPresent(lecture::setEndDateTime);
+        lectureValidator.validateUpdate(id, request);
 
-        Lecture updatedLecture = lectureRepository.save(lecture);
+        LectureMapper.updateLecture(lecture, request, lecturer);
+        Lecture saved = lectureRepository.save(lecture);
 
-        return LectureMapper.updateLectureResponse(updatedLecture);
+        return LectureMapper.updateLectureResponse(saved);
     }
 
     public void deleteLecture(Long id) {
         lectureRepository.deleteById(id);
     }
 
+    private Lecture findLectureById(Long id) {
+        return lectureRepository.findById(id)
+                .orElseThrow(() -> new LectureNotFoundException("Lecture not found with id: " + id));
+    }
+
+    private Lecturer findLecturerById(Long id) {
+        return lecturerRepository.findById(id)
+                .orElseThrow(() -> new LecturerNotFoundException("Lecturer not found: " + id));
+    }
+
+    private Pageable createPageable(int page, int size, String sortBy, String direction) {
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        return PageRequest.of(page, size, sort);
+    }
 }
