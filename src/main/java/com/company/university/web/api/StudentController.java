@@ -2,61 +2,97 @@ package com.company.university.web.api;
 
 import com.company.university.student.dto.*;
 import com.company.university.student.service.StudentService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/v1/students")
 @RequiredArgsConstructor
+@RequestMapping("/api/students")
 public class StudentController {
 
     private final StudentService studentService;
 
     @PostMapping
-    public ResponseEntity<CreateStudentResponse> createStudent(
-            @Valid @RequestBody CreateStudentRequest request) {
-
-        CreateStudentResponse response = studentService.createStudent(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<?> getStudents() {
-        return ResponseEntity.ok(studentService.getStudents());
+    @ResponseStatus(HttpStatus.CREATED)
+    public CreateStudentResponse createStudent(@RequestBody CreateStudentRequest request) {
+        return studentService.createStudent(request);
     }
 
     @GetMapping
-    public ResponseEntity<Page<FindStudentResponse>> getStudentsPage(
+    public List<FindStudentResponse> getStudents() {
+        return studentService.getStudents();
+    }
+
+    @GetMapping("/paged")
+    public Page<FindStudentResponse> getStudentsPaged(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
-
-        Page<FindStudentResponse> result = studentService.getStudents(page, size, sortBy, direction);
-        return ResponseEntity.ok(result);
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        return studentService.getStudents(page, size, sortBy, direction);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FindStudentResponse> getStudent(@PathVariable Long id) {
-        return ResponseEntity.ok(studentService.getStudent(id));
+    public FindStudentResponse getStudent(@PathVariable Long id) {
+        return studentService.getStudent(id);
+    }
+
+    // ------------------------------------------------------------
+    // 5. GET STUDENT WITH LECTURES (JOIN FETCH)
+    // ------------------------------------------------------------
+    @GetMapping("/{id}/with-lectures")
+    public FindStudentWithLecturesResponse findByIdWithLectures(@PathVariable Long id) {
+        return studentService.findByIdWithLectures(id);
+    }
+
+    @GetMapping("/with-lectures")
+    public List<FindStudentWithLecturesResponse> findAllWithLectures() {
+        return studentService.findAllWithLectures();
+    }
+
+    @GetMapping("/with-lectures/paged")
+    public Page<FindStudentWithLecturesResponse> findAllWithLecturesPaged(
+            @PageableDefault(size = 10, sort = "id") Pageable pageable
+    ) {
+        return studentService.findAllWithLectures(pageable);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UpdateStudentResponse> updateStudent(
+    public UpdateStudentResponse updateStudent(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateStudentRequest request) {
-
-        UpdateStudentResponse response = studentService.updateStudent(id, request);
-        return ResponseEntity.ok(response);
+            @RequestBody UpdateStudentRequest request
+    ) {
+        return studentService.updateStudent(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
-        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{studentId}/lectures/{lectureId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addLectureToStudent(
+            @PathVariable Long studentId,
+            @PathVariable Long lectureId
+    ) {
+        studentService.addLectureToStudent(studentId, lectureId);
+    }
+
+    @DeleteMapping("/{studentId}/lectures/{lectureId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeLectureFromStudent(
+            @PathVariable Long studentId,
+            @PathVariable Long lectureId
+    ) {
+        studentService.removeLectureFromStudent(lectureId, studentId);
     }
 }
