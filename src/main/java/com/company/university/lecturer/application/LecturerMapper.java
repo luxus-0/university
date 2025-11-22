@@ -9,7 +9,6 @@ import com.company.university.lecturer.dto.UpdateLecturerResponse;
 public class LecturerMapper {
     public static Lecturer toLecturer(CreateLecturerRequest request) {
         return Lecturer.builder()
-                .id(request.getId())
                 .name(request.getName())
                 .surname(request.getSurname())
                 .email(request.getEmail())

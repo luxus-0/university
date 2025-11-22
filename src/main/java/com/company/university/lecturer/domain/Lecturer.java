@@ -13,9 +13,10 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@EqualsAndHashCode(exclude = "lectures")
 @Table(name = "lecturer")
 public class Lecturer {
 
@@ -32,6 +33,7 @@ public class Lecturer {
     @Past
     private LocalDate dateOfBirth;
 
+    @Builder.Default
     @OneToMany(mappedBy = "lecturer", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Lecture> lectures = new HashSet<>();
 

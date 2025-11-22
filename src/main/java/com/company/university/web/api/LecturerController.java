@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -20,8 +21,8 @@ public class LecturerController {
     private final LecturerService lecturerService;
 
     @GetMapping
-    public ResponseEntity<Set<FindLecturerResponse>> getLecturers() {
-        Set<FindLecturerResponse> lecturers = lecturerService.getLecturers();
+    public ResponseEntity<List<FindLecturerResponse>> getLecturers() {
+        List<FindLecturerResponse> lecturers = lecturerService.getLecturers();
         return ResponseEntity.ok(lecturers);
     }
 
