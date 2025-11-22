@@ -1,7 +1,9 @@
 package com.company.university.web;
 
 import com.company.university.lecture.application.LectureNotFoundException;
-import com.company.university.student.application.StudentNotFoundException;
+import com.company.university.lecturer.application.LecturerNotFoundException;
+import com.company.university.student.application.*;
+import com.company.university.lecture.application.BusinessValidationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
@@ -13,74 +15,78 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
-@ControllerAdvice
+@RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
     private final MessageSource messageSource;
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
-
-        List<ValidationError> validationErrors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(f -> new ValidationError(
-                        f.getField(),
-                        f.getRejectedValue(),
-                        messageSource.getMessage(f, LocaleContextHolder.getLocale())
-                ))
-                .toList();
-
-        log.warn("Validation failed at path {}: {}", request.getRequestURI(), validationErrors);
-
-        return buildResponse(HttpStatus.BAD_REQUEST, messageSource.getMessage("validation.failed", null, LocaleContextHolder.getLocale()),
-                request.getRequestURI(), validationErrors);
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
-
-        List<ValidationError> validationErrors = ex.getConstraintViolations()
-                .stream()
-                .map(v -> new ValidationError(
-                        v.getPropertyPath().toString(),
-                        v.getInvalidValue(),
-                        messageSource.getMessage(v.getMessage(), null, v.getMessage(), LocaleContextHolder.getLocale())
-                ))
-                .toList();
-
-        log.warn("Constraint violation at path {}: {}", request.getRequestURI(), validationErrors);
-
-        return buildResponse(HttpStatus.BAD_REQUEST, messageSource.getMessage("constraint.violation", null, LocaleContextHolder.getLocale()),
-                request.getRequestURI(), validationErrors);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
-        log.warn("Bad request at path {}: {}", request.getRequestURI(), ex.getMessage());
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), null);
-    }
-
-    @ExceptionHandler({StudentNotFoundException.class, LectureNotFoundException.class})
+    @ExceptionHandler({
+            StudentNotFoundException.class,
+            LectureNotFoundException.class,
+            LecturerNotFoundException.class
+    })
     public ResponseEntity<ApiError> handleNotFound(RuntimeException ex, HttpServletRequest request) {
         log.info("Resource not found at path {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI(), null);
     }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiError> handleConflict(DataIntegrityViolationException ex, HttpServletRequest request) {
-        String message = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
-        log.error("Data integrity violation at path {}: {}", request.getRequestURI(), message, ex);
-        return buildResponse(HttpStatus.CONFLICT, messageSource.getMessage("data.integrity.violation", null, message, LocaleContextHolder.getLocale()),
-                request.getRequestURI(), null);
+    @ExceptionHandler({
+            StudentScheduleConflictException.class,
+            DataIntegrityViolationException.class
+    })
+    public ResponseEntity<ApiError> handleConflict(RuntimeException ex, HttpServletRequest request) {
+        String message = ex instanceof DataIntegrityViolationException ?
+                ((DataIntegrityViolationException) ex).getRootCause() != null ?
+                        ((DataIntegrityViolationException) ex).getRootCause().getMessage() : ex.getMessage() : ex.getMessage();
+
+        log.warn("Conflict at path {}: {}", request.getRequestURI(), message, ex);
+        return buildResponse(HttpStatus.CONFLICT, message, request.getRequestURI(), null);
+    }
+
+    @ExceptionHandler({
+            BusinessValidationException.class,
+            StudentPageMoreThanZeroException.class,
+            StudentPageSizeMoreThanZeroException.class,
+            IncorrectFieldSortedByException.class,
+            IncorrectSortDirectionException.class,
+            IllegalArgumentException.class
+    })
+    public ResponseEntity<ApiError> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
+        log.warn("Bad request validation error at path {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), null);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        List<ValidationError> errors = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .map(f -> new ValidationError(f.getField(), f.getRejectedValue(),
+                        messageSource.getMessage(f, LocaleContextHolder.getLocale())))
+                .toList();
+        log.warn("Validation failed at path {}: {}", request.getRequestURI(), errors);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request.getRequestURI(), errors);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
+        List<ValidationError> errors = ex.getConstraintViolations().stream()
+                .map(v -> new ValidationError(
+                        v.getPropertyPath().toString(),
+                        v.getInvalidValue(),
+                        messageSource.getMessage(v.getMessage(), null, v.getMessage(), LocaleContextHolder.getLocale())
+                )).toList();
+        log.warn("Constraint violation at path {}: {}", request.getRequestURI(), errors);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, "Constraint violation", request.getRequestURI(), errors);
     }
 
     @ExceptionHandler(Exception.class)
