@@ -8,11 +8,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class UpdateLecturerResponse {
-    @NotBlank
     private String name;
-    @NotBlank
     private String surname;
-    @Email
-    @NotBlank
     private String email;
 }

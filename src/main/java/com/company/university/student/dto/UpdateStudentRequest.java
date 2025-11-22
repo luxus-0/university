@@ -1,7 +1,9 @@
 package com.company.university.student.dto;
 
+import com.company.university.student.domain.StudentStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -18,6 +20,6 @@ public class UpdateStudentRequest {
     @Email
     private String email;
 
-    @NotBlank
-    private String status;
+    @NotNull
+    private StudentStatus status;
 }
