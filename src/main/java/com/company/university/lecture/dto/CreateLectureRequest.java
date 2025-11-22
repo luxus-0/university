@@ -1,6 +1,7 @@
 package com.company.university.lecture.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,8 +16,10 @@ public class CreateLectureRequest {
     private String description;
     @NotBlank
     private String roomNumber;
-    @NotBlank
+    @NotNull
     private LocalDateTime startDateTime;
-    @NotBlank
+    @NotNull
     private LocalDateTime endDateTime;
+    @NotNull
+    private Long lecturerId;
 }

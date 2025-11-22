@@ -11,13 +11,13 @@ import java.time.LocalDate;
 @Getter
 @Builder
 public class CreateLecturerRequest {
-    @NotBlank
+    @NotNull
     private Long id;
     @NotBlank
     private String name;
     @NotBlank
     private String surname;
-    @NotBlank
+    @NotNull
     private LocalDate dateOfBirth;
     @Email
     @NotBlank

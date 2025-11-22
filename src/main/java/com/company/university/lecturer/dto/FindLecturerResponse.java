@@ -10,17 +10,9 @@ import java.time.LocalDate;
 @Getter
 @Builder
 public class FindLecturerResponse {
-    @NotBlank
     private Long id;
-    @NotBlank
     private String name;
-    @NotBlank
     private String surname;
-    @NotBlank
     private LocalDate dateOfBirth;
-    @Email
-    @NotBlank
     private String email;
-    @NotBlank
-    private LocalDate getDateOfBirth;
 }
